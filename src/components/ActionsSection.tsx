@@ -22,6 +22,15 @@ export interface ActionsSectionProps {
     deleteCurrent: (id: string) => void,
 }
 
+const generateRandomColor = (): string => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * letters.length)];
+    }
+    return color;
+}
+
 export default function ActionsSection(props: ActionsSectionProps) {
 
     const currentCards = props.currents.map((current, index) => {
@@ -29,17 +38,9 @@ export default function ActionsSection(props: ActionsSectionProps) {
             key={current.id}
             current={current}
             updateCurrent={(current: Current) => props.updateCurrentByIndex(index, current)}
-            deleteCurrent={() => props.deleteCurrent(current.id)}/>
+            deleteCurrent={() => props.deleteCurrent(current.id)}
+            addCurrent={props.addCurrent}/>
     });
-
-    const generateRandomColor = (): string => {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * letters.length)];
-        }
-        return color;
-    }
 
     return (
         <div style={{gridTemplateRows: "auto 1fr", height: "calc(100vh - 40px)"}} className={"grid m-5 mr-0 gap-5"}>
@@ -114,6 +115,7 @@ export function CurrentCard(props: {
     current: Current,
     updateCurrent: (current: Current) => void,
     deleteCurrent: () => void,
+    addCurrent: (current: Current) => void,
 }) {
 
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
@@ -134,27 +136,22 @@ export function CurrentCard(props: {
             <Card>
                 <CardBody>
                     <div style={{gridTemplateColumns: "auto 1fr auto"}} className={"grid items-center gap-3"}>
-                        <span className={"w-2 h-full"} style={{background: props.current.color, borderRadius: 10}}>
-
-                        </span>
+                        <span className={"w-2 h-full"}
+                              style={{background: props.current.color, borderRadius: 10}}></span>
                         <div className={"flex flex-col gap-1"}>
                             <div className={"flex gap-2"}>
-                                {/*<Move className="w-4 text-accent pointer-events-none flex-shrink-0"/>*/}
                                 <p>Position:</p>
                                 <Code className={"ml-auto"}
                                       color={"primary"}>{Math.floor(props.current.x)}:{Math.floor(props.current.y)}</Code>
                             </div>
                             <div className={"flex gap-2"}>
-                                {/*<Zap className="w-4 text-accent pointer-events-none flex-shrink-0"/>*/}
                                 <p>Value: </p>
                                 <Code className={"ml-auto"} color={"primary"}>{props.current.currentValue}A</Code>
                             </div>
                             <div className={"flex gap-2"}>
-                                {/*<Maximize2 className="w-4 text-accent pointer-events-none flex-shrink-0"/>*/}
                                 <p>Radius: </p>
                                 <Code className={"ml-auto"} color={"primary"}>{props.current.radius}m</Code>
                             </div>
-
                         </div>
                         <Dropdown>
                             <DropdownTrigger>
@@ -169,7 +166,9 @@ export function CurrentCard(props: {
                             <DropdownMenu className={"bg-content1"} aria-label="Static Actions">
                                 <DropdownItem onPress={onOpen} color={"primary"} key="new">Edit
                                     current</DropdownItem>
-                                <DropdownItem color={"primary"} key="new">Duplicate current</DropdownItem>
+                                <DropdownItem onPress={() => {
+                                    props.addCurrent({...props.current, id: uid(), color: generateRandomColor()})
+                                }} color={"primary"} key="new">Duplicate current</DropdownItem>
                                 <DropdownItem
                                     onPress={() => props.deleteCurrent()}
                                     key="delete"
@@ -219,7 +218,8 @@ export function CurrentCard(props: {
                                     errorMessage={newRadiusValueError ? <p>{newRadiusValueError}</p> : null}
                                     autoFocus
                                     startContent={
-                                        <Maximize2 className="text-2xl text-default-400 pointer-events-none flex-shrink-0"/>
+                                        <Maximize2
+                                            className="text-2xl text-default-400 pointer-events-none flex-shrink-0"/>
                                     }
                                     endContent={
                                         <span className={"text-foreground-100"}>Meters</span>
@@ -249,7 +249,11 @@ export function CurrentCard(props: {
 
                                     setNewRadiusValueError(null);
                                     setNewCurrentValueError(null);
-                                    props.updateCurrent({...props.current, radius: Number.parseFloat(newRadiusValue), currentValue: Number.parseFloat(newCurrentValue)});
+                                    props.updateCurrent({
+                                        ...props.current,
+                                        radius: Number.parseFloat(newRadiusValue),
+                                        currentValue: Number.parseFloat(newCurrentValue)
+                                    });
                                     onClose();
                                 }}>
                                     Save
